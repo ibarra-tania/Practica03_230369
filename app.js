@@ -13,7 +13,7 @@ app.use(session({
     cookie: {secure:false, maxAge: 24*60*60*1000} //Usar secure: true solo si usas https, maxAge permite definir la duración de la sesión 24 horas
 }));
 
-app.use((req, res, next) => {
+/*app.use((req, res, next) => {
     if(req.session){
         if(!req.session.createAt){
             req.session.createAt = new Date();
@@ -22,15 +22,14 @@ app.use((req, res, next) => {
         req.session.lastAcess = new Date();
     }
     next();
-});
+});*/
 
-app.get('/login/:name/:pass', (req ,res) =>{
+app.get('/login/:name', (req ,res) =>{
     const userName = req.params.name;
-    const password = req.params.pass;
-
-    if(req.session){
+    if(!req.session.createAt){
         req.session.userName = userName;
-        req.session.password= password;
+        req.session.createAt= new Date();
+        req.session.lastAcess= new Date ();
         //req.session.createAt = new Date();
         //req.session.lastAcess= new Date();
         res.send(`
@@ -39,7 +38,7 @@ app.get('/login/:name/:pass', (req ,res) =>{
             <p><a href="/session">Ir a detalles de la sesión</a></p>
             `)
     }else{
-        res.send('<h1>No se pudo iniciar sesión.</h1>')
+        res.send('<h1>Ya existe una sesión</h1>')
     }
 })
 
@@ -83,7 +82,7 @@ app.get('/status', (req, res) =>{
 });
 
 app.get('/session', (req, res)=>{
-    if(req.session && req.session.userName && req.session.password){
+    if(req.session && req.session.userName){
         const userName = req.session.userName;
         const sessionId= req.session.id;
         const createAt= new Date(req.session.createAt);
@@ -110,12 +109,16 @@ app.get('/session', (req, res)=>{
 
 
 app.get('/logout', (req, res) => {
-    req.session.destroy((err)=>{
-        if(err){
-            return res.send('Error al cerrar la sesión.');
-        }
-        res.send('<h1>Sesión cerrada exitosamente.</h1>')
-    })
+    if(req.session){
+        req.session.destroy((err) => {
+            if(err){
+                return res.status(500).send('Error al cerrar sesión');
+            }
+            res.send('<h1>Sesión cerrada exitosamente.</h1>')
+        })
+    }else{
+        res.send('No hay una sesión activca para cerrar')
+    }
 
 })
 
