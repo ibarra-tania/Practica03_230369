@@ -1,14 +1,15 @@
 const express=require('express')
 const session=require ('express-session')
 const crypto = require('crypto')
+const moment= require('moment-timezone')
 
 const app=express();
 
 app.use(session({
-    secret: 'mi-clave-secreta',
+    secret: 'p3-TIS#tres-sesionespersistentes',
     resave: false,
     saveUninitialized: true, 
-    cookie: {secure: false}
+    cookie: {secure:false, maxAge: 24*60*60*1000} //Usar secure: true solo si usas https, maxAge permite definir la duración de la sesión 24 horas
 }));
 
 app.use((req, res, next) => {
