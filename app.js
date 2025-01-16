@@ -22,13 +22,15 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/login/:name', (req ,res) =>{
+app.get('/login/:name/:pass', (req ,res) =>{
     const userName = req.params.name;
+    const password = req.params.pass;
 
     if(req.session){
         req.session.userName = userName;
+        req.session.pass= password;
         res.send(`
-            <h1>Bienvenido al sistema</h1>
+            <h1>Bienvenido</h1>
             <p><strong>Nombre de usuario: </strong> ${userName}</p>
             <p><a href="/session">Ir a detalles de la sesión</a></p>
             `)
@@ -38,7 +40,7 @@ app.get('/login/:name', (req ,res) =>{
 })
 
 app.get('/session', (req, res)=>{
-    if(req.session && req.session.userName){
+    if(req.session && req.session.userName && req.session.password){
         const userName = req.session.userName;
         const sessionId= req.session.id;
         const createAt= new Date(req.session.createAt);
@@ -52,6 +54,7 @@ app.get('/session', (req, res)=>{
         <p><strong>Fecha de creación de la sesión:</strong> ${createAt}</p>
         <p><strong>Último acceso:</strong> ${lastAcess}</p>
         <p><strong>Duración de la sesión (en segundos): </strong> ${sessionDuration}</p>
+        <p><a href="/logout">Cerrar sesión</a></p>
         `)
     }else{
         res.send(`
