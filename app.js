@@ -1,7 +1,8 @@
-const express=require('express')
-const session=require ('express-session')
+const express= require('express')
+const session= require ('express-session')
 const crypto = require('crypto')
-const moment= require('moment-timezone')
+const moment= require('moment-timezone');
+const { read } = require('fs');
 
 const app=express();
 
@@ -29,9 +30,11 @@ app.get('/login/:name/:pass', (req ,res) =>{
 
     if(req.session){
         req.session.userName = userName;
-        req.session.pass= password;
+        req.session.password= password;
+        //req.session.createAt = new Date();
+        //req.session.lastAcess= new Date();
         res.send(`
-            <h1>Bienvenido</h1>
+            <h1>Bienvenido, tu sesión ha sido iniciada</h1>
             <p><strong>Nombre de usuario: </strong> ${userName}</p>
             <p><a href="/session">Ir a detalles de la sesión</a></p>
             `)
@@ -39,6 +42,45 @@ app.get('/login/:name/:pass', (req ,res) =>{
         res.send('<h1>No se pudo iniciar sesión.</h1>')
     }
 })
+
+app.get('/update', (req, res) =>{
+    if(req.session.createAt){
+        req.session.lastAcess = new Date();
+        res.send('La fecha de último acceso ha sido actualizada')
+    }else{
+        res.send('No hay una sesión activa');
+    }
+})
+
+app.get('/status', (req, res) =>{
+    if(req.session.createAt){
+        const now = new Date();
+        const started= new Date(req.session.createAt);
+        const lastUpdate= new Date(req.session.lastAcess);
+
+        //Calcula la antiguedad de la sesión
+        const sessionAgeMs= now- started;
+        const hours= Math.floor(sessionAgeMs/ (1000*60*60))
+        const minutes = Math.floor((sessionAgeMs % (1000*60*60))/(1000*60));
+        const seconds= Math.floor((sessionAgeMs % (1000*60))/1000)
+
+        const createdAt_CDMX = moment(started).tz('America/Mexico_City').format('YYYY-MM-DD HH:mm:ss')
+        const lastAcces_CDMX = moment(lastUpdate).tz('America/Mexico_City').format('YYYY-MM-DD HH:mm:ss')
+        
+
+        res.json({
+            message: 'Estado de la sesión',
+            sessionId: req.sessionID,
+            inicio: createdAt_CDMX,
+            ultimoAcceso: lastAcces_CDMX,
+            antiguedad: `${hours} horas, ${minutes} minutos y ${seconds} segundos`
+            
+        });
+
+    }else{
+        res.send('No hay sesión activa');
+    }
+});
 
 app.get('/session', (req, res)=>{
     if(req.session && req.session.userName && req.session.password){
